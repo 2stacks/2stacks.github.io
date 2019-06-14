@@ -15,8 +15,8 @@ I decided to write this post to help with the [discussion on the Rancher Forum][
 trying to setup Letsencrypt certificates with cert-manager.  I've borrowed and owe credit to work that's already been
 documented [here][1] and I'll try to stick to the steps I took to enable the full automation of the certificate process.
 
-Prereqs
--------
+Prerequisites
+-------------
 
 I'm going to assume a few things for brevity.
 
@@ -24,7 +24,7 @@ I'm going to assume a few things for brevity.
 * You have kubectl set up with your [Rancher Kubeconfig File][2]
 * You have the [Rancher Library Catalog][3] enabled (you must use the cert-manager from the Rancher library and not from Helm Stable Catalog)
 * You have a publicly reachable dns service that points the domain, for which you want to issue certificates, to your cluster nodes, loadbalancer or port forwarder if using NAT.
-* If your cluster is behind NAT you have set up split DNS. (See secition on DNS)
+* If your cluster is behind NAT you have set up split DNS. (See section on DNS)
 
 Installation
 ------------
@@ -126,7 +126,7 @@ Configuring Ingress
 -------------------
 ### Deploy a Test Workload
 
-I chose to deploy an nginx container as a test since it provides the deafault server and nginx welcome page without any
+I chose to deploy an nginx container as a test since it provides the default server and nginx welcome page without any
 configuration.
 
 From the `Workloads` section of your chosen Rancher Project click the `Deploy` button.  Give the workload a name, choose
@@ -394,12 +394,12 @@ some of you are attempting to use cert-manager on a private lab network.  I assu
 won't have as many http01 verification issues but I could be wrong.
 
 * First, I have a wildcard dns record in AWS Route53 that points *.bsptn.xyz to a device performing NAT for my lab environment.
-* That NAT boundary forwards all port 80 and 443 to an L4-7 load balancer that services my Kubernetes clusters.
+* That NAT boundary forwards all port 80 and 443 to an L4-7 loadbalancer that services my Kubernetes clusters.
 * I have a private DNS server built with [PowerDNS][5] for internal name resolution of private IPs.  I chose PowerDNS because
 it provides an API that integrates with the Kubernetes add on service [external-dns][6]
 * Inside my Kubernetes cluster's I deploy the Bitnami version of the external-dns application.
 
-Any Ingress I create in my clusters is automaticaly registered in PowerDNS via the external-dns application.  This make the
+Any Ingress I create in my clusters is automatically registered in PowerDNS via the external-dns application.  This make the
 process of performing HTTP01 verification much easier in my environment.
 
 If you're interested in more details of how I set up my lab environment feel free to contact me.  I have posted a lot of the work
