@@ -11,6 +11,7 @@ tags:
   - Rancher
   - Letsencrypt
 ---
+
 I decided to write this post to help with the [discussion on the Rancher Forum][0] regarding the difficulties many were having
 trying to setup Letsencrypt certificates with cert-manager.  I've borrowed and owe credit to work that's already been
 documented [here][1] and I'll try to stick to the steps I took to enable the full automation of the certificate process.

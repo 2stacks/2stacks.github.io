@@ -6,7 +6,7 @@ categories:
 tags:
   - Docker
   - NGINX
-link: https://github.com/2stacks/docker-nginx-lb
+link: https://www.2stacks.net/docker-nginx-lb/
 ---
 
 I recently started learning Docker and was immediately amazed by the [docker-compose][0] feature.  I've created a sample web application using [NGINX][2] that can be rapidly deployed using [docker-compose][5].  My GitHub repo page walks you through running and testing the application.  It is composed of an [NGINX loadbalancer][3] fronting two [NGINX web servers][4].  The demo can be downloaded at [2stacks/docker-nginx-lb][1].
