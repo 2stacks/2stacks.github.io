@@ -24,6 +24,12 @@ search: true
 
 # SEO
 google_site_verification: "xGzmpR56BcKfIDDfvqSTNBGxHe_2ibsCBu8yhJeOfX8"
+analytics:
+  provider: "google-gtag"
+  google:
+    tracking_id: "UA-142280412-1"
+    anonymize_ip: false # default
+
 
 # Build settings
 markdown: kramdown
