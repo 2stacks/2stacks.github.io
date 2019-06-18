@@ -21,15 +21,33 @@ twitter_username: StanMan2Stacks
 github_username: 2stacks
 minimal_mistakes_skin: default
 search: true
+search_full_content: true
+comments:
+  provider: "disqus"
+  disqus:
+    shortname: "2stacks"
 
 # SEO
 google_site_verification: "xGzmpR56BcKfIDDfvqSTNBGxHe_2ibsCBu8yhJeOfX8"
+
+# Analytics
 analytics:
   provider: "google-gtag"
   google:
     tracking_id: "UA-142280412-1"
     anonymize_ip: false # default
 
+# Social Sharing
+twitter:
+  username: "StanMan2Stacks"
+
+og_image: /assets/images/nanner_puss.jpg
+
+social:
+  links:
+    - "https://twitter.com/StanMan2Stacks"
+    - "https://github.com/2stacks"
+    - "https://www.hackster.io/2stacks"
 
 # Build settings
 markdown: kramdown
@@ -69,6 +87,9 @@ author:
   avatar : "/assets/images/nanner_puss.jpg"
   bio    : "A Collection of Projects and Interests."
   links:
+    - label: "Email"
+      icon: "fas fa-fw fa-envelope-square"
+      url: mailto:2stacks@2stacks.net
     - label: "2stacks.net"
       icon: "fas fa-fw fa-link"
       url: "https://www.2stacks.net"
