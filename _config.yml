@@ -22,6 +22,9 @@ github_username: 2stacks
 minimal_mistakes_skin: default
 search: true
 
+# SEO
+google_site_verification: "xGzmpR56BcKfIDDfvqSTNBGxHe_2ibsCBu8yhJeOfX8"
+
 # Build settings
 markdown: kramdown
 remote_theme: mmistakes/minimal-mistakes
