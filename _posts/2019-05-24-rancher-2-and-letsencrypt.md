@@ -46,18 +46,18 @@ error: the server doesnt have a resource type "clusterissuers"
 Next navigate to the `Apps` section of your chosen Rancher Project.  The project shouldn't matter but I chose to use the `System`
 project for all cluster wide services.
 
-![alt text](/assets/images/nav_to_apps.png "Navigate to Apps")
+![alt text](/assets/images/20190524/nav_to_apps.png "Navigate to Apps")
 
 Next click the launch button and and type "cert" in the search menu.  Click `View Details` on the cert-manager provided by 
 the Rancher Library.
 
-![alt text](/assets/images/cert_mgr_from_library.png "Launch cert-manager")
+![alt text](/assets/images/20190524/cert_mgr_from_library.png "Launch cert-manager")
 
 The only settings you need to change are for the type of `Issuer Client` and the `Client Register Email`.  If you are not
 confident that you have fully met the previously mentioned prerequisites you should leave the issuer client set to `letsencrypt-staging`.
 Once you've configured your settings click the `Launch` button.
 
-![alt text](/assets/images/config_cert_mgr.png "Configure cert-manager")
+![alt text](/assets/images/20190524/config_cert_mgr.png "Configure cert-manager")
 
 ### Verify Installation
 
@@ -116,12 +116,12 @@ Events:                    <none>
 The important thing to note is that the cert-manager pod is running and that your email account was successfully registered
 with the ACME server API.  If you output isn't similar to above check the logs of the cert-manager pod for any issues.
 
-![alt text](/assets/images/view_logs.png "View Logs")
+![alt text](/assets/images/20190524/view_logs.png "View Logs")
 
 Notice in the logs below the message that says `Not syncing ingress default/nginx as it does not contain necessary annotations`.
 I precreated a test nginx deployment which we are going to use to test the `ingress-shim` functionality of cert-manager.
 
-![alt text](/assets/images/logs.png "Logs")
+![alt text](/assets/images/20190524/logs.png "Logs")
 
 Configuring Ingress
 -------------------
@@ -134,7 +134,7 @@ From the `Workloads` section of your chosen Rancher Project click the `Deploy` b
 the nginx `Docker Image` of your choice, leave the NameSpace set to default.  Add a `Port Mapping` for port 80 and publish
 the service as a `Cluster IP (Internal only)`.  Click `Launch` to create the new workload.
 
-![alt text](/assets/images/new_workload.png "Launch Workload")
+![alt text](/assets/images/20190524/new_workload.png "Launch Workload")
 
 ### Create an Ingress
 
@@ -148,18 +148,18 @@ By default Rancher chooses a `Workload` as the default for the `Target Backend`.
 automatically created when we deployed our nginx workload.  Click the minus sign button to the right of the `Port` field
 to remove the existing Target Backend.
 
-![alt text](/assets/images/configure_ingress.png "Configure Ingress")
+![alt text](/assets/images/20190524/configure_ingress.png "Configure Ingress")
 
 Now click the `Service` button next to `Target Backend`. Set the `Path` to "/" and in the `Target` drop down select the nginx
 service.
 
-![alt text](/assets/images/target_backend.png "Target Backend")
+![alt text](/assets/images/20190524/target_backend.png "Target Backend")
 
 At this point you should save the ingress without configuring any SSL Certificates or Annotations.  You should verify that
 you nginx deployment is reachable via the ingress from both the Internet and your internal network.  If you can not then
 you have more work to do with DNS, Load Balancing, NAT etc. before you can proceed to the next step.
 
-![alt text](/assets/images/nginx_http.png "Nginx Http")
+![alt text](/assets/images/20190524/nginx_http.png "Nginx Http")
 
 ### Edit the Ingress
 
@@ -167,18 +167,18 @@ At this point if you have verified that your ingress service is reachable you ca
 to automatically request and deploy a certificate.  From the `Load Balancing` menu click the drop down to the far right of
 the nginx ingress and then select `edit`
 
-![alt text](/assets/images/edit_ingress.png "Edit Ingress")
+![alt text](/assets/images/20190524/edit_ingress.png "Edit Ingress")
 
 Scroll to the bottom of the page and expand the `SSL/TLS Certificates` and `Labels & Annotations`  sections.  First click
 the `Add Certificate` button under the SSL/TLS section.  Leave the option set for `Use default ingress controller certificate`.
 Don't worry we will manually edit this in the Yaml later.  Set the `Host` section to the FQDN of your service.
 
-![alt text](/assets/images/add_cert.png "Add Certificate")
+![alt text](/assets/images/20190524/add_cert.png "Add Certificate")
 
 Now you need to add the annotations as per the [ingress-shim][4] documentation.  If you forget the required annotations you
 can view the docs.  They are also provided in the `Notes` section when you first launched the cert-manager app.
 
-![alt text](/assets/images/shim_settings.png "Ingress-shim")
+![alt text](/assets/images/20190524/shim_settings.png "Ingress-shim")
 
 Under the `Labels & Annotations` section click the `Add Annotation` button twice and add the following annotations.
 * `kubernetes.io/tls-acme: "true"`
@@ -186,25 +186,25 @@ Under the `Labels & Annotations` section click the `Add Annotation` button twice
 
 Now click `Save` to update the Ingress.
 
-![alt text](/assets/images/save_ingress.png "Save Ingress Changes")
+![alt text](/assets/images/20190524/save_ingress.png "Save Ingress Changes")
 
 The final step can not be performed through the Rancher Gui at this time.  We'll need to manually edit the Yaml of the Ingress
 we just created.
 
 From the `Load Balancing` menu click the drop down to the far right of the nginx ingress and then select `View/Edit YAML`.
 
-![alt text](/assets/images/edit_yaml.png "Edit YAML")
+![alt text](/assets/images/20190524/edit_yaml.png "Edit YAML")
 
 Scroll the bottom of the Yaml config and under `spec -> tls -> hosts` add the `secretName` definition with the resource 
 name you want the certificate to be saved with.  I've chosen `nginx-bsptn-xyz-crt` for my implementation.  Now click the
 save button.
 
-![alt text](/assets/images/add_secretname.png "Add SecretName")
+![alt text](/assets/images/20190524/add_secretname.png "Add SecretName")
 
 If everything to this point has gone well and if you watch carefully, cert-manager will temporarily create a new Ingress
 for the purposes of performing HTTP01 challenge verification.
 
-![alt text](/assets/images/challenge_ingress.png "Challenge Ingress")
+![alt text](/assets/images/20190524/challenge_ingress.png "Challenge Ingress")
 
 If you missed it or if something went wrong now is a good time to review the cert-manager logs.  I've included my logs
 from the last time the ingress-shim failed due to missing configurations up until the certificate is pulled and the temporary
@@ -303,7 +303,7 @@ you are in good shape.  I'll run through just a couple of things to verify every
 Within the project in which you created your Ingress navigate to `Resources` -> `Certificates` and verify that your certificate
 resource has been created in the cluster.
 
-![alt text](/assets/images/verify_certificate.png "Verify Certificate Resource")
+![alt text](/assets/images/20190524/verify_certificate.png "Verify Certificate Resource")
 
 The Rancher UI does't give a lot of information about the certificate so to view it's details we'll need to use Kubectl.
 
@@ -378,7 +378,7 @@ The last obovious verification is to load the nginx web page and verify with the
 been issued from the staging API.  Since I chose to issue certs from the staging API the browser will still generate a certificate
 error however, you can see from the certificate details that is has been Issued By `Fake LE Intermediate X1`.
 
-![alt text](/assets/images/verify_browser.png "Verify Browser")
+![alt text](/assets/images/20190524/verify_browser.png "Verify Browser")
 
 Additional Notes
 ----------------
