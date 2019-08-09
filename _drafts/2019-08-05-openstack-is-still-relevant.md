@@ -65,6 +65,7 @@ maas-01:~$ sudo chown <user>:<user> .maascli.db
 ##### MaaS Networking Concepts
 ![alt text](/assets/images/20190805/maas_architecture.png "MaaS Networking Concepts")
 
+##### Configure DHCP
 - DHCP
     
   A reserved dynamic IP range is needed in order for MAAS-managed DHCP to at least enlist and commission nodes and the creation of such a range is part of the process of enabling DHCP with the web UI.
@@ -73,6 +74,10 @@ maas-01:~$ sudo chown <user>:<user> .maascli.db
   - Deployed
 - Auto Assigned/Static
   - Deployed
+  
+##### Add Vlans
+
+##### Add Subnets
       
 ### Configure Host
 #### Networking
@@ -89,7 +94,23 @@ maas-01:~$ sudo chown <user>:<user> .maascli.db
 ```bash
 maas-01:~$ sudo apt install ipmitool
 maas-01:~$ ipmitool -I lanplus -H <host_ip> -U <user> -P <password> sdr elist all
+Temp             | 01h | ns  |  3.1 | No Reading
+Temp             | 02h | ns  |  3.2 | No Reading
+Temp             | 05h | ns  | 10.1 | No Reading
+Ambient Temp     | 07h | ns  | 10.1 | Disabled
+Temp             | 06h | ns  | 10.2 | No Reading
+Ambient Temp     | 08h | ns  | 10.2 | Disabled
+Ambient Temp     | 0Eh | ns  |  7.1 | No Reading
+Planar Temp      | 0Fh | ns  |  7.1 | No Reading
+CMOS Battery     | 10h | ns  |  7.1 | No Reading
+....
+...
+..
 ```
+
+#### Enlistment
+
+#### Commissioning
 
 ##### IPMI Setup Verification in MaaS
 ![alt text](/assets/images/20190805/ipmi_verification_1.png "IPMI Verification")
