@@ -3,7 +3,6 @@ title: "Bare Metal to Kubernetes-as-a-Service - Part 1"
 excerpt: "Using MAAS (metal-as-a-service) to build self-service private clouds."
 layout: single
 toc: true
-toc_sticky: true
 categories:
   - Blog
 tags:
