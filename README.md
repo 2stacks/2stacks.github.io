@@ -2,11 +2,14 @@
 
 bundle exec jekyll serve
 
+### To include draft posts
+bundle exec jekyll serve -D
+
 Replace sample content with your own and [configure as necessary](https://mmistakes.github.io/minimal-mistakes/docs/configuration/).
 
 ---
 
-## Troubleshooting
+# Troubleshooting
 
 If you have a question about using Jekyll, start a discussion on the [Jekyll Forum](https://talk.jekyllrb.com/) or [StackOverflow](https://stackoverflow.com/questions/tagged/jekyll). Other resources:
 
