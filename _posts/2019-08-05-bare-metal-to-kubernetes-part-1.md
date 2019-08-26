@@ -21,9 +21,9 @@ Google software engineer Janet Kuo describes Kubernetes as
 The “ease” with which she speaks has led to the rapid 
 adoption of Kubernetes by organisations of all sizes and across all industries.  However, “easy” is relative.  For all of 
 the gains made by Kubernetes, as it relates to managing applications, there is a general consensus that deploying and 
-managing Kubernetes itself is hard.  To address this problem, all of the major public cloud companies (Google [GKE](https://cloud.google.com/kubernetes-engine/), 
-Amazon [EKS](https://aws.amazon.com/eks/), Microsoft [AKS](https://azure.microsoft.com/en-us/services/kubernetes-service/), 
-etc.) are now offering Kubernetes-as-a-Service.  Similar to Infrastructure-as-a-Service ([IaaS](https://en.wikipedia.org/wiki/Infrastructure_as_a_service)) 
+managing Kubernetes itself is hard.  To address this problem, all of the major public cloud companies (Google [GKE], 
+Amazon [EKS], Microsoft [AKS], 
+etc.) are now offering Kubernetes-as-a-Service.  Similar to Infrastructure-as-a-Service ([IaaS]) 
 these offerings promise to abstract the functionality of Kubernetes from the underlying physical resources, tooling and 
 expertise needed to support it.  If your organization is leveraging public cloud services then problem solved.  But what 
 about organizations in search of private cloud Kubernetes offerings?  Although there are a growing number of options 
@@ -575,3 +575,8 @@ it possible to rapidly build a self managed cloud of physical resources much lik
 cloud vendors.
 
 [1]:https://www.zdnet.com/article/what-kubernetes-really-is-and-how-orchestration-redefines-the-data-center/
+
+[EKS]:https://aws.amazon.com/eks/
+[GKE]:https://cloud.google.com/kubernetes-engine/
+[AKS]:https://azure.microsoft.com/en-us/services/kubernetes-service/
+[IaaS]:https://en.wikipedia.org/wiki/Infrastructure_as_a_service
