@@ -95,3 +95,7 @@ cloud_provider:
       router-id: cdc4e1b1-a92d-47d1-85a2-03c6209d68c5
 ```
 
+juju destroy-model openstack
+juju destroy-controller juju-01 --destroy-all-models
+juju remove-cloud maas-01
+juju remove-credential maas-01  maas-01_cred
