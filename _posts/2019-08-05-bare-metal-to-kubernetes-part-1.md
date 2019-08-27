@@ -408,14 +408,12 @@ Network and Storage configurations are also applied as part of this process.
     1. curtin installation script is run
     2. Squashfs image (same as above) is placed on disk
 
-Once a machine is in the Ready state (post-commissioning) it's intended network and storage configuration can be defined 
-in MAAS.
-
 ### Configure MAAS Network Model
-Once a host has been commissioned, interfaces can be added/removed, attached to a fabric, linked to a subnet, and 
-provided an IP assignment mode.  This is done using a model that represents the desired network configuration for a
-deployed host.  This allows MAAS to deploy consistent networking across multiple operating systems regardless of whether 
-they employ [Network Manager], [systemd-networkd] or [Netplan].
+Once a machine is in the Ready state (post-commissioning) it's intended network and storage configuration can be defined 
+in MAAS.  Interfaces can be added/removed, attached to a fabric, linked to a subnet, and provided an IP assignment mode.  
+This is done using a model that represents the desired network configuration for a deployed host.  This allows MAAS to 
+deploy consistent networking across multiple operating systems regardless of whether they employ [Network Manager], 
+[systemd-networkd] or [Netplan].
 
 >Refer back to the [Lab Setup](#lab-setup) section of this post for an overview of the configurations we'll create in MAAS.
 
