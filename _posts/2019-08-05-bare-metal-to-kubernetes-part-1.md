@@ -146,7 +146,7 @@ so hopefully this summary will be of use to those deploying MAAS for the first t
   
 ### MAAS Concepts and Terms
 For complex, highly available deployments, MAAS supports concepts similar to those found in public clouds such as _Regions_
-and _Availability Zones_.  For the purposes of this article we will not be focused on those for now.  If you would like 
+and _Availability Zones_.  For the purposes of this post we will not be focused on those for now.  If you would like 
 more information on configuring these features please read the [MAAS Documentation].
 
 #### Fabric
