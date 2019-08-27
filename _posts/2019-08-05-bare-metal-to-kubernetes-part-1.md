@@ -46,7 +46,7 @@ In order to replicate the configurations that I'm going to demonstrate, the foll
 - 1 x Router/Firewall to provide inter-vlan routing and Internet access.
 
 ## Lab Setup
-My lab environment is representative of a typical [Brownfield] deployment so disregard the randomness of names, interfaces, 
+My lab environment is representative of a typical [brownfield] deployment so disregard the randomness of names, interfaces, 
 vlans etc.  The goal is not to confuse but to demonstrate a more complex network configuration than is found in the MAAS 
 documentation.
 
