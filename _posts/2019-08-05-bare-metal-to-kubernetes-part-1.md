@@ -18,7 +18,7 @@ tags:
 >“You can think of Kubernetes as a platform for application patterns. The patterns make your application easy to deploy, 
 >easy to run, and easy to keep running.” <cite>[Janet Kuo][1]</cite>
 
-The “ease” with which Google Engineer Janet Kuo speaks has led to the rapid adoption of Kubernetes by organisations of 
+The “ease” with which Google Engineer Janet Kuo speaks has led to the rapid adoption of Kubernetes by organizations of 
 all sizes and across all industries.  However, “easy” is relative.  For all of the gains made by Kubernetes, as it relates 
 to managing applications, there is a general consensus that deploying and managing Kubernetes itself is hard.  To address 
 this problem, all of the major public cloud companies (Google [GKE], Amazon [EKS], Microsoft [AKS], etc.) are now offering 
