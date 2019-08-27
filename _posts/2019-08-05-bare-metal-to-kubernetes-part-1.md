@@ -417,7 +417,7 @@ provided an IP assignment mode.  This is done using a model that represents the 
 deployed host.  This allows MAAS to deploy consistent networking across multiple operating systems regardless of whether 
 they employ [Network Manager], [systemd-networkd] or [Netplan].
 
->Refer back to he [Lab Setup](#lab-setup) section of this post for an overview of the configurations we'll create in MAAS.
+>Refer back to the [Lab Setup](#lab-setup) section of this post for an overview of the configurations we'll create in MAAS.
 
 The network configuration we'll model will use a dedicated 10G interface.  This interface is connected to an 802.1q 
 trunk on my physical switch and can be used with any vlan configured in my lab environment.
