@@ -12,7 +12,11 @@ tags:
   - Juju
   - OpenStack
   - Kubernetes
+  - Rancher
 ---
+
+[Part 1]({% post_url 2019-08-05-bare-metal-to-kubernetes-part-1 %})
+[Part 2]({% post_url 2019-08-27-bare-metal-to-kubernetes-part-2 %})
 
 openstack server create --image bionic --flavor m1.medium --nic net-id=$(openstack network list | grep int_net | awk '{ print $2 }') --user-data cloud-init rancher
 openstack server list
