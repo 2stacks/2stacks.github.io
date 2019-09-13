@@ -29,53 +29,56 @@ offerings?  Although there are a growing number of options available in this spa
 the degree to which they make Kubernetes “easy” is still relative.
 
 ## Objective
-To address some of the challenges, to organizations looking to adopt an on-premises solution, I wanted to demonstrate how 
-you can build your own Kubernetes-as-a-Service offering using readily available open source solutions. I'm going to cover 
-this process in a series of posts each one building upon the previous.  The final solution will consist of a private cloud, 
-built with [MAAS] and [Openstack], on which self-service Kubernetes clusters can be deployed.
+Organizations looking to adopt an on-premise as-a-service Kubernetes solution face implementation challenges and choices. This 
+lab deployment demonstrates how anyone can build their own Kubernetes-as-a-Service offering using readily available open 
+source solutions. I'm going to cover this process in a series of posts each one building upon the previous.  The final 
+solution will consist of a private cloud, built with [MAAS] (Metal-as-a-Service) and [Openstack], on which self-service 
+Kubernetes clusters can be deployed.
 
-This first post will cover the deployment of MAAS or Metal-as-a-Service as the base building block of this on-premises 
-solution.
+This first post will cover the deployment of MAAS as the base building block of this on-premises solution.  MAAS is 
+[Canonical's] open source solution for building a self-service cloud of bare metal servers.  It allows you to deploy and 
+manage physical servers as though they were virtual instances in a public cloud.
 
 # Prerequisites
 In order to replicate the configurations that I'm going to demonstrate, the following minimum requirements must be met;
-- 1 x Physical host or VM to run MAAS server. (see https://maas.io/docs/maas-requirements)
+- 1 x Physical host or VM to run MAAS. (see [https://maas.io/docs/maas-requirements](https://maas.io/docs/maas-requirements))
 - 1 x Physical host or VM to run the [Juju] controller. (We'll use this to deploy Openstack on MAAS)
-- 2 x Physical hosts with an [IPMI] capable [BMC]. (Minimum Quad Core with 32G RAM recommended)
-- 1 x Switch capable of supporting vlans.
+- 2 x Physical hosts with an [IPMI] capable [BMC]. (Bare minimum for this demonstration - Quad Core, 8G RAM, two network 
+interfaces and two storage disks)
+- 1 x Switch with VLAN support.
 - 1 x Router/Firewall to provide inter-vlan routing and Internet access.
 
 ## Lab Setup
 My lab environment is representative of a typical [brownfield] deployment so disregard the randomness of names, interfaces, 
-vlans etc.  The goal is not to confuse but to demonstrate a more complex network configuration than is found in the MAAS 
-documentation.
+vlans etc.  You can substitute VLAN IDs, Subnets, Names etc. to match your own environment.
 
 ### Physical Configuration
-On each of the physical servers that will be managed by MAAS, I'm using a combination of dedicated links, tagged and 
-untagged vlan interfaces in order to demonstrate some of the configuration options available in MAAS.  Working with the 
-MAAS network model is not very intuitive and requires some trial and error in order to support more complex configurations.  The following lists each interface and its function
-in my lab environment.
-- eno1 - unused
-- eno2 - unused
-- eno3 - unused
-- eno4 - dedicated for PXE boot (enabled via server bios)
-- enp4s0 - 10G trunk link used for management, nfs and Openstack virtual networks
-- mgmt0 - iDrac interface used for IPMI power management
+On each of the physical servers that will be managed by MAAS, you'll need a BMC interface, two network interfaces and two storage 
+disks.  The network and storage requirements are set by the Openstack installation I'll demonstrate in a later blog post.  Below
+is the configuration I'm using in my environment.
+
+#### Network
+- **eno1** - PXE Boot and Host Management
+- **eno2** - Dedicated to Openstack Networking
+- **mgmt0** - iDrac interface used for IPMI power management
 
 ![alt text](/assets/images/20190805/physical.png "Lab Setup")
 
+#### Storage
+- **/dev/sda** - Used for OS Installation
+- **/dev/sdb** - Dedicated to Openstack Storage
+
 ### Logical Configuration
-I'm using the following vlans in my lab to represent a minimum set of logical networks one might need to deploy a self
-hosted data center.  It is in no way an exhaustive list or a recommendation for best practice.
-- v11 - IPMI for out of band access to the physical hosts
-- v20 - MAAS for PXE and management of deployed hosts
-- v173 - NFS for network attached storage
-- v193 - IaaS will be used to assign floating IPs to Openstack instances
+I'm using the following vlans in my lab for this demonstration.  You may substitute these as needed however, it is 
+recommended that you use at least three separate vlans.
+- **v11** - IPMI for out of band access to the physical hosts
+- **v20** - MAAS for PXE Boot and host management
+- **v193** - IaaS for Openstack virtual machine instances
 
 ![alt text](/assets/images/20190805/maas_lab.png "Lab Setup")
 
->Note: I will not be covering the creation of vlans or tagged and untagged interfaces on the physical switch.
-Please consult your switch vendor's documentation for guidance on implementing these configurations.
+>Note: I will not be covering the creation of interfaces and vlans on the physical switch or router. Please consult your 
+>device documentation for guidance on implementing these configurations.
 
 # MAAS Deployment
 ## Install MAAS
@@ -83,10 +86,10 @@ The installation of MAAS is very simple.  For lab purposes we'll be installing b
 [Rack Controller] service on the same host.  I recommend you start with a clean install of Ubuntu Server 18.04.  For any 
 other OS/version please check the MAAS documentation for compatibility.  To get started you can use any of the following 
 options;
-- Quick Start - https://maas.io/install
-- Documentation - https://maas.io/docs/install-from-packages
-- Or for the impatient, ssh to the machine you've dedicated to run MAAS and execute the following;
+- Quick Start - [https://maas.io/install](https://maas.io/install)
+- Documentation - [https://maas.io/docs/install-from-packages](https://maas.io/docs/install-from-packages)
 
+Or for the impatient, ssh to the machine you've dedicated to run MAAS and execute the following;
 ```bash
 maas-01:~$ sudo apt-add-repository -yu ppa:maas/stable
 maas-01:~$ sudo apt update
@@ -174,39 +177,37 @@ used to discover and manage machines.  The easiest and recommended setup is to e
 the MAAS server resides.
 - **Managed Subnet** - By default all subnets added to MAAS are considered _Managed_ regardless of whether you choose
 to enable MAAS managed DHCP for them.
-    - **Reserved Ranges** - in a _Managed_ subnet will never be utilized by MAAS.  However, any IP in the subnet that is 
-    outside of one of the reserved ranges can be statically assigned to hosts when they are deployed.  Reserved ranges in 
+    - **Reserved Ranges** - A reserved range in a _Managed_ subnet will never be utilized by MAAS.  However, any IP in the subnet that is 
+    outside of the reserved ranges can be statically assigned to hosts when they are deployed.  Reserved ranges in 
     this case are to be used to exclude the assignment of IPs that may be in use by routers, switches and other infrastructure 
     devices within the subnet.
-    - **Reserved Dynamic Ranges** - in a _Managed_ subnet can be used for _Enlistment_ and _Commissioning_ as previously 
+    - **Reserved Dynamic Ranges** - A dynamic range in a _Managed_ subnet can be used for _Enlistment_ and _Commissioning_ as previously 
     mentioned but can also be used to assign DHCP addresses to hosts during deployment.  This will actually set the deployed 
     hosts' /etc/network/interfaces or [Netplan] configuration to use DHCP.
 - **Unmanaged Subnet** - You must explicitly configure a subnet added to MAAS as _Unmanaged_.  This assumes that there 
 may be an external DHCP server allocating addresses for this subnet.
-    - **Reserved Ranges** - in an _Unmanaged_ Subnet constitute the only addresses that may be statically assigned by MAAS 
+    - **Reserved Ranges** - Reserved ranges in an _Unmanaged_ Subnet constitute the only addresses that may be statically assigned by MAAS 
     during host deployment.  You must also add this same range to a DHCP exclusion list in any external DHCP server used 
     for this subnet.
-    - **Reserved Dynamic Ranges** - can not be configured in an _Unmanaged_ subnet.
+    - **Reserved Dynamic Ranges** - Dynamic ranges can not be configured in an _Unmanaged_ subnet.
 
-Until you feel you've mastered the difference between these concepts it is recommended that you start with a single DHCP
-range managed by MAAS for _Enlistment_ and _Commissioning_ purposes and that all other subnets you add be left in the default
-configuration of _Managed_.  The following steps will cover the basics of configuring these subnets and reserved ranges.
+>Until you feel you've mastered the difference between these concepts it is recommended that you start with a single DHCP
+range managed by MAAS for _Enlistment_ and _Commissioning_ purposes.
   
 ### Configure DHCP
-As previously mentioned the first step in configuring the DHCP requirements is to enable MAAS managed DHCP on the default
-untagged vlan utilized by the MAAS server.  
+To configure the DHCP requirements we need to enable MAAS managed DHCP on the default untagged vlan utilized by the MAAS 
+server.  
 
->This vlan also needs to be configured as untagged, in your physical switch(s), to 
-all hosts that will be managed by MAAS.  It is important to note that if the vlan is not configured as untagged to your 
-physical hosts the PXE boot process may not work.
+>This vlan needs to be configured in your physical switch(s) as the access or [native vlan] (untagged) to all hosts that will be 
+>managed by MAAS.  If it is not configured as untagged to your physical hosts the PXE boot process may not work.
 
 Click on the **Subnets** tab in the MAAS GUI navigation, then click the link for the vlan named **untagged**
 ![alt text](/assets/images/20190805/configure_dhcp_1.png "Configure DHCP")
 
-Click the **Eanble DHCP** button
+Click the **Enable DHCP** button
 ![alt text](/assets/images/20190805/configure_dhcp_2.png "Configure DHCP")
 
-To configure the first _Reserved Dynamic Range_ enter a start and end IP address for the range that MAAS will use for DHCP.
+To configure the _Reserved Dynamic Range_ enter a start and end IP address for the range that MAAS will use for DHCP.
 I've added a comment as a reminder that this range is primarily used for enlistment and commissioning. Click the **Configure DHCP** 
 button to apply the settings.
 ![alt text](/assets/images/20190805/configure_dhcp_3.png "Configure DHCP")
@@ -224,52 +225,6 @@ At this point we have configured MAAS to manage the allocation of the default vl
 - **10.1.20.11-10.1.20.199** - MAAS may use this range to allocate static IPs to deployed hosts.
 - **10.1.20.200-10.1.20.254** - MAAS will use this range for Enlistment and Commissioning and may use it to assign DHCP 
 addresses to deployed hosts.
-
-### Add Vlans
-Next we'll add the additional vlans to be used in our lab environment.
-
-Click on the **Subnets** tab in the MAAS GUI navigation then click the **Add** dropdown menu to the right and select **VLAN**.
-![alt text](/assets/images/20190805/add_vlan_1.png "Add Vlans")
-
-Give the vlan a name and set the vlan-id **VID** to match your physical switch configuration.  Here I am configuring my lab's
-NFS storage vlan with an 802.1q tag of 173.  Click the **Add VLAN** button to save the new vlan.
-![alt text](/assets/images/20190805/add_vlan_2.png "Add Vlans")
-
-Repeat this process for vlan 193 (v193-iaas) or any other vlans you have in your environment.
-
-### Add Subnets
-After we've added vlans we need to configure the subnet or subnets that correspond to each vlan.
-
-Click the **Add** dropdown menu in the top right and select **Subnet**.
-![alt text](/assets/images/20190805/add_subnet_1.png "Add Subnets")
-
-At minimum you must configure the [CIDR] address and the **Fabric & Vlan** this subnet is associated with.  You may also 
-wish to configure a **Gateway IP** and **DNS Servers** (if not using the MAAS server for DNS resolution).  Below I am 
-configuring the subnet for my NFS vlan which does not make use of a default gateway or DNS.
-![alt text](/assets/images/20190805/add_subnet_2.png "Add Subnets")
-
->If your underlying network is configured with multiple subnets (v4 or v6) in a single vlan, you can add multiple subnets for each 
->vlan configured in MAAS.
-
-I only have one additional vlan/subnet to add for my lab environment (as previously mentioned, I'll be using this subnet
-with Openstack instances in a subsequent blog post).  This subnet is configured with a default gateway and a DNS server 
-external to MAAS.
-![alt text](/assets/images/20190805/add_subnet_3.png "Add Subnets")
-
-For each of the subnets I've added I will also create a **Reserved range** to block off the first ten IP addresses for 
-use by network infrastructure devices.  This step is optional but recommended.
-
-Click the link for the subnet you want to configure.
-![alt text](/assets/images/20190805/configure_subnet_1.png "Configure Subnet")
-
-Now under the **Reserved ranges** section click the drop down menu to the right and select **Reserve range**.  Enter the 
-desired range of IP addresses to be excluded from assignment by MAAS and click the **Reserve** button.
-![alt text](/assets/images/20190805/configure_subnet_2.png "Configure Subnet")
-
->Recall that by default subnets are considered Managed by MAAS and all IPs (outside of the configured Reserved Ranges) 
->will be available for MAAS to assign as static IPs to deployed hosts.  Since we did not configure any Dynamic Reserved 
->Ranges for these additional subnets they can not be used for Enlistment, Commissioning or to assign DHCP addresses to 
->deployed hosts.
 
 # Machine Deployment
 Now that we have completed the initial configuration of MAAS we can prepare the physical hosts/machines that will be 
@@ -408,64 +363,30 @@ Network and Storage configurations are also applied as part of this process.
     1. curtin installation script is run
     2. Squashfs image (same as above) is placed on disk
 
-### Configure MAAS Network Model
+### MAAS Network Model
 Once a machine is in the Ready state (post-commissioning) it's intended network and storage configuration can be defined 
 in MAAS.  Interfaces can be added/removed, attached to a fabric, linked to a subnet, and provided an IP assignment mode.  
 This is done using a model that represents the desired network configuration for a deployed host.  This allows MAAS to 
 deploy consistent networking across multiple operating systems regardless of whether they employ [Network Manager], 
 [systemd-networkd] or [Netplan].
 
->Refer back to the [Lab Setup](#lab-setup) section of this post for an overview of the configurations we'll create in MAAS.
+MAAS will automatically discover the host interfaces and the vlan/subnet configuration used by the PXE enabled interface.  The
+default configuration is all that is needed for this demonstration but MAAS is capable of provisioning advanced network
+settings such as LACP Bonds, VLAN interfaces and bridges.
 
-The network configuration we'll model will use a dedicated 10G interface.  This interface is connected to an 802.1q 
-trunk on my physical switch and can be used with any vlan configured in my lab environment.
+To view the current network configuration Navigate to the **Interfaces** tab of the host.  Notice that the **IP Mode** is
+set to **Auto assign** this means that when the host is deployed MAAS will automatically configure a static IP address on
+the host.  This is not the same as enabling DHCP in the post-deployment configuration.
 
-We'll first have to configure the physical interface **enp4s0** then we can add the vlan sub-interfaces.
+![alt text](/assets/images/20190805/network_model.png "Network Model")
 
-Navigate to the **Interfaces** tab of the host, click the **Actions** button to the right of **enp4s0** and select 
-**Edit Physical** from the list.
-![alt text](/assets/images/20190805/configure_interface_1.png "Configure Interfaces")
+If you prefer you can also change
+this setting to **Static assign** and manually set the preferred IP address yourself.
 
-Add the interface to **fabric-0**, select the **untagged** vlan and it’s associated subnet then set the IP mode to **Auto 
-Assign**. Click the **Save physical** button to save the configuration.
-![alt text](/assets/images/20190805/configure_interface_2.png "Configure Interfaces")
+![alt text](/assets/images/20190805/static_assign.png "Static Assign")
 
->I have configured the [native vlan] on the switch port connected to enp4s0 
->to carry the untagged vlan used by the MAAS server. This allows me to utilize this vlan for host management post 
->deployment.
-
-Now we'll add our tagged NFS vlan to the interface.
-
-Click the **Actions** button to the right of **enp4s0** and select **Add alias or VLAN** from the list.
-![alt text](/assets/images/20190805/configure_interface_3.png "Configure Interfaces")
-
-Set the **Type** to **VLAN**, select the tagged NFS vlan and its associated subnet, then set the **IP mode** to **Auto assign**.
-Now click the **Add** button to save the configuration.
-![alt text](/assets/images/20190805/configure_interface_4.png "Configure Interfaces")
-
-Next add the IaaS vlan to the interface.
-
-Click the **Actions** button to the right of **enp4s0** and select **Add alias or VLAN** from the list.
-![alt text](/assets/images/20190805/configure_interface_5.png "Configure Interfaces")
-
-Set the **Type** to **VLAN**, select the tagged IaaS vlan and its associated subnet, then set the **IP mode** to **Unconfigured**.
-Now click the **Add** button to save the configuration.
-![alt text](/assets/images/20190805/configure_interface_6.png "Configure Interfaces")
-
->It's important that you not configure an IP on this interface else instances created in Openstack will be able to communicate
->directly with the host.
-
-Now we'll remove the existing configuration from the PXE enabled interface **eno4**.  This will only affect the host post deployment.
-If the host is [Released](#release) from deployment the interface can still be used to PXE boot the host for further configuration.
-
-Click the **Actions** button to the right of **eno4** and select **Edit Physical** from the list.  To exclude this interface
-form the deployment configuration simply set the **Fabric** to **Disconnected**.  Click the **Save physical** button to 
-save the configuration.
-![alt text](/assets/images/20190805/configure_interface_7.png "Configure Interfaces")
-
-At this point you should have a network model that looks like the following;
-
-![alt text](/assets/images/20190805/configure_interface_8.png "Configure Interfaces")
+>No configuration is needed in MAAS for eno2.  However, you need to make sure that this interface is assigned to the vlan 
+>you want to use with Openstack on your physical switch.
 
 ### Configure MAAS Storage Model
 The last requirement before deploying a host is to configure the storage disks and filesystems.
@@ -479,10 +400,13 @@ disks that were discovered.
 Next, click the button under **Actions** to the right of the disk you want to configure and select **Add partition**.
 ![alt text](/assets/images/20190805/configure_disk_1.png "Configure Disks")
 
-Configure the **Size**, **Filesystem** type and **Mount point** you to want provision.  For lab purposes I'm going to use the simplest 
-possible configuration of a single ext4 partition mounted at the root of the filesystem.
+Configure the **Size**, **Filesystem** type and **Mount point** you to want provision.  For lab purposes I'm going to use 
+the simplest possible configuration of a single ext4 partition mounted at the root of the filesystem.
 ![alt text](/assets/images/20190805/configure_disk_2.png "Configure Disks")
 Click the **Add partition** button after filling in these settings.
+
+>Do not configure any partitions or filesystems on the remaining disk (sdb).  The Openstack deployment will fail if it 
+>can not detect an unused disk.
 
 ### Deployment
 To deploy the host click the **Take action** button in the top right corner and select **Deploy** from the drop down list.
@@ -577,6 +501,7 @@ cloud vendors.
 [AKS]:https://azure.microsoft.com/en-us/services/kubernetes-service/
 [BMC]:https://en.wikipedia.org/wiki/Intelligent_Platform_Management_Interface#Baseboard_management_controller
 [Brownfield]:https://en.wikipedia.org/wiki/Brownfield_(software_development)
+[Canonical's]:https://canonical.com/
 [CIDR]:https://en.wikipedia.org/wiki/Classless_Inter-Domain_Routing
 [Commissioning]:https://maas.io/docs/commission-nodes
 [Concepts and Terms]:https://maas.io/docs/concepts-and-terms
