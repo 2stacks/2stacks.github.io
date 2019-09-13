@@ -14,10 +14,14 @@ tags:
   - Kubernetes
   - Rancher
 ---
-
+# Introduction
 [Part 1]({% post_url 2019-08-05-bare-metal-to-kubernetes-part-1 %})
 [Part 2]({% post_url 2019-09-06-bare-metal-to-kubernetes-part-2 %})
 
+# Prerequisites
+172.16.100.8:/nfs/nova  /var/lib/nova/instances nfs4    defaults        0       0
+
+# Install Rancher
 openstack server create --image bionic --flavor m1.medium --nic net-id=$(openstack network list | grep int_net | awk '{ print $2 }') --user-data cloud-init rancher
 openstack server list
 openstack server add floating ip rancher <ip>
@@ -105,3 +109,7 @@ juju destroy-model openstack
 juju destroy-controller juju-01 --destroy-all-models
 juju remove-cloud maas-01
 juju remove-credential maas-01  maas-01_cred
+
+openstack network create lab_net --provider-network-type vlan --provider-segment 10 --provider-physical-network physnet1
+openstack subnet create lab_subnet --no-dhcp --subnet-range 10.1.0.0/24 --network lab_net --allocation-pool start=10.1.0.101,end=10.1.0.250 --gateway 10.1.0.1 --dns-nameserver 10.1.0.1
+openstack server create --image bionic --flavor m1.small --key-name id_rsa --nic net-id=$(openstack network list | grep lab_net | awk '{ print $2 }') --config-drive true lab-test

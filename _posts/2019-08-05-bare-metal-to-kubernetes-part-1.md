@@ -444,36 +444,25 @@ ubuntu@metal-03:~$ cat /etc/netplan/50-cloud-init.yaml
 ---
 network:
     ethernets:
-        enp4s0:
+        eno1:
             addresses:
-            - 10.1.20.94/24
+            - 10.1.20.13/24
             gateway4: 10.1.20.1
             match:
-                macaddress: 5c:40:9e:39:01:d5
+                macaddress: f0:4d:a2:07:c9:2d
             mtu: 1500
             nameservers:
                 addresses:
                 - 10.1.20.5
                 search:
                 - maas
-            set-name: enp4s0
+            set-name: eno1
+        eno2:
+            match:
+                macaddress: f0:4d:a2:07:c9:2f
+            mtu: 1500
+            set-name: eno2
     version: 2
-    vlans:
-        enp4s0.173:
-            addresses:
-            - 172.16.100.11/24
-            id: 173
-            link: enp4s0
-            mtu: 1500
-            nameservers:
-                addresses:
-                - 10.1.20.5
-                search:
-                - maas
-        enp4s0.193:
-            id: 193
-            link: enp4s0
-            mtu: 1500
 ```
 
 ### Release
