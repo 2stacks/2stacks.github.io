@@ -295,7 +295,7 @@ cp bundle.yaml bundle.yaml.bak
 If you've been following my examples you can download a copy of the bundle file I'm using or edit the bundle.yaml file to
 match your own environment;
 ```bash
-wget https://gist.githubusercontent.com/2stacks/d0b4b4b81df4a835934bbd9b8543ad2e/raw/8a8bc1c3293222a179683ba62092224a1b4567ac/bundle.yaml
+wget https://gist.githubusercontent.com/2stacks/d0b4b4b81df4a835934bbd9b8543ad2e/raw/aa98813d2dc260b188931c5df58066db3b54c4df/bundle.yaml
 ```
 
 You can diff my version with the original file to see what I've changed.  
@@ -519,7 +519,7 @@ Next we'll create [flavors] that determine the amount of resources given to virt
 ```bash
 openstack flavor create --ram 1024 --disk 10 m1.small
 openstack flavor create --vcpus 2 --ram 2048 --disk 20 m1.medium
-openstack flavor create --vcpus 4 --ram 4096 --disk 20 m1.large
+openstack flavor create --vcpus 4 --ram 4096 --disk 40 m1.large
 ```
 
 [flavors]:https://docs.openstack.org/nova/stein/user/flavors.html
@@ -561,9 +561,9 @@ openstack subnet create ext_subnet --no-dhcp --allocation-pool start=192.168.10.
     --subnet-range 192.168.10.0/24 --gateway 192.168.10.1 --dns-nameserver 192.168.10.1 --network ext_net
 ```
 
->Refer to [Part 1]({% post_url 2019-08-05-bare-metal-to-kubernetes-part-1 %}) of this series for the networks and interfaces
->we created to support the Openstack installation.  Note: additional subnets can be created within a network (ex. IPv6) if
->the underlying physical network supports it.
+>Refer to [Part 1]({% post_url 2019-08-05-bare-metal-to-kubernetes-part-1 %}) of this series for a description of the networks 
+>and interfaces required to support the Openstack installation.  The subnet you create here must be routable in your 
+>environment.
 
 The second network type we'll create is a self-service network.  These networks allow non privileged users of the Openstack
 installation to create project specific networks.  Typically they employ GRE or VXLAN as overlays and require an Openstack 
@@ -760,8 +760,8 @@ more /var/log/octavia/octavia-worker.log
 ```
 
 ### Configure the Load Balancer
-Once the load balancer has been created we can configure vips/pools/monitors etc.  I'm only going to show how to create a
-simple service to forward ssh connections to the _bionic-test_ instance we created.
+Once the load balancer has been created we can configure vips/pools/monitors etc.  For testing purposes, I'm only going 
+to show how to create a simple service to forward ssh connections to the _bionic-test_ instance we created.
 ```bash
 openstack loadbalancer listener create --name listener1 --protocol tcp --protocol-port 22 lb-01
 openstack loadbalancer pool create --name pool1 --lb-algorithm ROUND_ROBIN --listener listener1 --protocol tcp
