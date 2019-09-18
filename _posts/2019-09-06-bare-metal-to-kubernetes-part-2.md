@@ -694,7 +694,7 @@ chmod 600 ~/.ssh/os_rsa
 openstack keypair create os_rsa > ~/.ssh/os_rsa
 ```
 
-To upload an existing public key run;
+Or to upload an existing public key run;
 ```bash
 openstack keypair create --public-key ~/.ssh/id_rsa.pub id_rsa
 ```
@@ -702,10 +702,10 @@ openstack keypair create --public-key ~/.ssh/id_rsa.pub id_rsa
 ## Add an Instance
 The following command will add a new compute instance named _bionic-test_ using the Ubuntu 18.04 cloud image.  The configured
 flavor will give it 1 vCPU and 1G of RAM.  It will be configured with an IP in the internal subnet we created, be 
-assigned to the default security group and will allow SSH access using the id_rsa keypair. 
+assigned to the default security group and will allow SSH access using the os_rsa keypair. 
 ```bash
 openstack server create \
-    --image bionic --flavor m1.small --key-name id_rsa \
+    --image bionic --flavor m1.small --key-name os_rsa \
     --nic net-id=$(openstack network list | grep int_net | awk '{ print $2 }') \
     bionic-test
 ```
@@ -730,7 +730,7 @@ Once the **Status** of `openstack server list` shows that the instance is **ACTI
 ```
 
 ```bash
-~$ ssh -i ~/.ssh/id_rsa ubuntu@$floating_ip
+~$ ssh -i ~/.ssh/os_rsa ubuntu@$floating_ip
 
 Welcome to Ubuntu 18.04.3 LTS (GNU/Linux 4.15.0-60-generic x86_64)
 
@@ -793,7 +793,7 @@ Now ssh to the newly created floating IP.  If the load balancer was created corr
 to your internal instance.
 
 ```bash
-~$ ssh -i ~/.ssh/id_rsa ubuntu@$floating_ip
+~$ ssh -i ~/.ssh/os_rsa ubuntu@$floating_ip
 
 Welcome to Ubuntu 18.04.3 LTS (GNU/Linux 4.15.0-60-generic x86_64)
 
