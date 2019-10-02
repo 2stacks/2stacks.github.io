@@ -15,33 +15,107 @@ tags:
   - Rancher
 ---
 # Introduction
-Why Rancher?
+I started this series of posts with the assertion that, although a lot of effort has gone in to making Kubernetes easier
+to deploy and operate, Kubernetes is still hard.  Simply showing how to deploy a Kubernetes cluster is not the 
+aim.  There are thousands of how-to's on the web covering the basics.  The ultimate point of these posts is to demonstrate 
+at least one viable option for deploying a capability similar to a public cloud Kubernetes-as-a-service solution.  This 
+means having the ability to provision multiple, production-ready clusters complete with features such as [multitenancy], 
+role based access control ([RBAC]), [service mesh], [CI/CD] etc.  When you hear "Kubernetes is hard" it's not usually in 
+reference to simply setting up a functioning cluster.  It is usually a commentary on the challenges associated with these 
+additional features which are necessary for running Kubernetes in production.
+
+# Objective
+I mentioned in [Part 1]({% post_url 2019-08-05-bare-metal-to-kubernetes-part-1 %}) of this series some of the available 
+solutions for deploying Kubernetes in private clouds.  After some extensive research and experimentation with a few of 
+the more popular solutions I decided to go with [Rancher's] Kubernetes management platform.  This is not an endorsement of 
+one product over another and I don't intend to do a side-by-side comparison of all of the platforms I tested.  For me,
+Rancher simply shortened the steep learning curve associated with Kubernetes and met or exceeded all of the requirements 
+I had for running production clusters with limited experience.  
+
+In this final post I'm going to demonstrate how to integrate Rancher with Openstack.  Integrating these two technologies 
+simplifies the deployment and management of production ready Kubernetes clusters.  Rancher abstracts and automates the 
+process of creating the underlying infrastructure and provides a unified management platform for running Kubernetes at 
+scale on any cloud, public or private.  Once completing this demonstration we'll have a self-service platform from which 
+to create and manage multiple Kubernetes clusters with the features necessary for production environments.  
+
+[RBAC]:https://en.wikipedia.org/wiki/Role-based_access_control
+[service mesh]:https://istio.io/docs/concepts/what-is-istio/#what-is-a-service-mesh
+[CI/CD]:https://en.wikipedia.org/wiki/CI/CD
+[multitenancy]:https://en.wikipedia.org/wiki/Multitenancy
+[Rancher's]:https://rancher.com/
 
 # Prerequisites
-- [Part 1]({% post_url 2019-08-05-bare-metal-to-kubernetes-part-1 %})
-- [Part 2]({% post_url 2019-09-06-bare-metal-to-kubernetes-part-2 %})
+In [Part 1]({% post_url 2019-08-05-bare-metal-to-kubernetes-part-1 %}) of this series we deployed [MAAS] to automate the
+provisioning and management of our physical compute resources.  In [Part 2]({% post_url 2019-09-06-bare-metal-to-kubernetes-part-2 %})
+we deployed [Openstack] as our Infrastructure-as-a-Service (IaaS) platform for managing virtual machines, networks and
+storage.  These prerequisites provide the private cloud infrastructure on which Rancher will automate self-service Kubernetes
+deployments.  If you've been following along up till now you should already have everything you need to complete this final
+demonstration. 
+
+[MAAS]:https://maas.io/
+[Openstack]:https://www.openstack.org/
 
 # Install Rancher
-[Rancher Docs]:https://rancher.com/docs/rancher/v2.x/en/
+Rancher was designed to be [cloud-native] and is intended to be run as a distributed, highly available (HA) application on top of
+Kubernetes.  That said, getting started with Rancher is as simple as launching a single [container].  For the purposes of this demonstration I'll be using a 
+single node deployment.  For additional information on running Rancher in HA please reference the [Rancher Documentation].
 
-## Update cloud-init
+[cloud-native]:https://opensource.com/article/18/7/what-are-cloud-native-apps
+[container]:https://techcrunch.com/2016/10/16/wtf-is-a-container/
+[Rancher Documentation]:https://rancher.com/docs/rancher/v2.x/en/
+
+## Create Cloud-init file
+To automate the creation and installation of the Rancher server we'll use a [cloud-init] file with the Openstack API.
+
+>Cloud-init is the industry standard multi-distribution method for cross-platform cloud instance initialization. It is 
+>supported across all major public cloud providers, provisioning systems for private cloud infrastructure, and bare-metal 
+>installations.
+
 [cloud-init]:https://cloudinit.readthedocs.io/en/latest/
-Get SSH Public Key
-[Part 2](https://www.2stacks.net/blog/bare-metal-to-kubernetes-part-2/#add-ssh-keys)
+
+First we'll need to retrieve the SSH public key from the keypair that was created in [Part 2](https://www.2stacks.net/blog/bare-metal-to-kubernetes-part-2/#add-ssh-keys)
 ```bash
 openstack keypair show --public-key os_rsa
 ```
-Download user data file
-```bash
-wget 
-```
 
-Edit user data file with your public key
+Next using your preferred text editor create a file named `cloud-init` with the following contents.  Be sure to replace
+`<your public key>` with the public key retrieved in the previous step.
+```bash
+#cloud-config
+groups:
+  - ubuntu
+  - docker
+users:
+  - name: ubuntu
+    shell: /bin/bash
+    sudo: ['ALL=(ALL) NOPASSWD:ALL']
+    primary-group: ubuntu
+    groups: sudo, docker
+    lock_passwd: true
+    ssh-authorized-keys:
+      - ssh-rsa <your public key>
+apt:
+  sources:
+    docker:
+      keyid: "0EBFCD88"
+      source: "deb [arch=amd64] https://download.docker.com/linux/ubuntu bionic stable" 
+package_upgrade: true
+packages: 
+  - apt-transport-https 
+  - docker-ce
+runcmd:
+  - "docker run -d --restart=unless-stopped -p 80:80 -p 443:443 rancher/rancher"
+```
+This cloud-init file will instruct the Ubuntu virtual machine, that we'll launch in the next step, to install Docker, then
+pull and run the Rancher server container.
 
 ## Create Rancher Server
+You should have already created the required Openstack flavors, images and networks needed to launch the server.  To launch
+the server with the custom cloud-init file run; 
 ```bash
-openstack server create --image bionic --flavor m1.medium --nic net-id=$(openstack network list | grep int_net | awk '{ print $2 }') --user-data cloud-init rancher
-openstack server list rancher
+openstack server create --image bionic --flavor m1.medium \
+    --nic net-id=$(openstack network list | grep int_net | awk '{ print $2 }') \
+    --user-data cloud-init rancher
 ```
 
 ## Add Floating IP
@@ -52,8 +126,15 @@ openstack server add floating ip rancher ${floating_ip}
 ```
 
 # Security Groups
+Rancher and Kubernetes in general has many port and protocol requirements for communicating with cluster nodes.  There are 
+several different ways to implement these requirements depending upon the type of public or private cloud you are deploying 
+to.  Make sure you review these [port and protocol] requirements before running Rancher in production.  For demonstration 
+purposes I'm going to update the existing default security group in Openstack to allow all traffic.  It should go without 
+saying that this is not recommended outside of a lab environment.
+
 [port and protocol]:https://rancher.com/docs/rancher/v2.x/en/installation/requirements/
 
+To update the default security group run;
 ```bash
 project_id=$(openstack project show --domain admin_domain admin -f value -c id)
 secgroup_id=$(openstack security group list --project ${project_id} | awk '/default/ {print $2}')
@@ -62,34 +143,68 @@ openstack security group rule create $secgroup_id --protocol any --ethertype IPv
 ```
 
 # Connect to Rancher UI
+Our Rancher server should now be remotely reachable via the floating IP address we added earlier.  To get the IP run;
 ```bash
 openstack server show rancher -f value -c addresses
 ```
-`https://<floating_ip>`
+
+Now open a web browser and launch the Rancher User Interface (UI) at `https://<floating_ip>`.
 
 ![Rancher UI](/assets/images/20190918/rancher_ui.png "Rancher UI")
 
 # Configure Rancher
-- Admin Password
-- Server URL
+Upon connecting to the Rancher UI you'll be prompted to set a new password for the default `admin` user.
+
+After selecting **Continue** you'll be prompted to set the Rancher server URL.  It's OK to leave the default for now but 
+typically this would be the fully qualified domain name of the server.  Note: all cluster nodes will
+need to be able to reach this URL and it can be changed later from within the UI.
 
 ![Rancher URL](/assets/images/20190918/rancher_url.png "Rancher URL")
 
+After selecting **Save URL** you'll be logged in to the default **Clusters** view of the UI.  Since no clusters have been
+added, only a **Add Cluster** button is visible.  
+
 ## Enable Openstack Node Driver
-Tools -> Drivers -> Node Drivers
+Before adding our first cluster we need to configure settings to allow Rancher to automate the provisioning of Openstack 
+resources.  The first configuration change will be to enable the Openstack [Node Driver].
+
+>Node drivers are used to provision hosts, which Rancher uses to launch and manage Kubernetes clusters.
+
+[Node Driver]:https://rancher.com/docs/rancher/v2.x/en/admin-settings/drivers/node-drivers/
+
+To enable the Openstack Node Driver navigate to **Tools** then **Drivers** in the UI navigation.
 
 ![Enable Node Driver](/assets/images/20190918/node_driver_1.png "Enable Node Driver")
+
+On the Drivers page, click tab for **Node Drivers**, select the check box next to **OpenStack** and then click the **Activate**
+button.
 
 ![Enable Node Driver](/assets/images/20190918/node_driver_2.png "Enable Node Driver")
 
 ## Add Openstack Node Template
-User Menu -> Node Templates -> Add Template
+Once we've enabled the Openstack Node Driver we can create a [Node Template] that will specify the settings used to create
+nodes/hosts within Openstack.
+
+[Node Template]:https://rancher.com/docs/rancher/v2.x/en/cluster-provisioning/rke-clusters/node-pools/#node-templates
+
+To create the node template click the drop down in the top right of the UI next to the admin user avatar and select 
+**Node Templates**.
 
 ![Enable Node Template](/assets/images/20190918/node_template_1.png "Enable Node Template")
+
+Next click the **Add Template** button.
+
+![Enable Node Template](/assets/images/20190918/node_template_4.png "Enable Node Template")
+
+On the Add Node Template page first select the option for Openstack.  Before filling out the template data we'll need to
+retrieve our settings from the Openstack API.
 
 ![Enable Node Template](/assets/images/20190918/node_template_2.png "Enable Node Template")
 
 ### Obtain Template Data
+The script for obtaining the default API credentials was included in the Openstack bundle we downloaded in 
+[Part 2](https://www.2stacks.net/blog/bare-metal-to-kubernetes-part-2/#configure-openstack-bundle).  If they are not already
+loaded in your environment change to the openstack-base directory and run the following.
 ```bash
 ~$ source openrc
 ~$ env | grep OS_
@@ -99,25 +214,41 @@ OS_PASSWORD=Uafe7chee6eigedi
 OS_AUTH_URL=http://10.1.20.32:5000/v3
 OS_USERNAME=admin
 ```
+>Above, I've only listed the settings needed for the node template.
 
-Get domain and tenant id
+After loading the API credentials in your environment, you'll need to obtain the default domain and tenant id from the 
+Openstack API.
 ```bash
 openstack project show admin -f value -c id
 ```
-- authUrl - http://10.1.20.32:5000/v3
-- domainName - admin_domain
-- flavorName - m1.large
-- floatingipPool - ext_net
-- imageName - bionic
-- insecure - enable
-- keypairName - os_rsa
-- netName - int_net
-- password - Uafe7chee6eigedi
-- privateKeyFile - <os_rsa private key>
-- secGroups - default
-- sshUser - ubuntu
-- tenantid - ca52ba242b104464b15811d4589f836e (Use tenantId, using tenantName will cause docker-machine to use identity v2)
-- username - admin
+
+Once you have these settings you should have all of the information needed to fill out the node template.  Several of the 
+settings shown below were created in [Part 2](https://www.2stacks.net/blog/bare-metal-to-kubernetes-part-2/#validate-deployment)
+in order to validate the Openstack installation.  
+
+>Below are all of the required settings with the values relevant to my environment.
+
+| Option | Value |
+|--- |--- |
+| **authUrl** | http://10.1.20.32:5000/v3 |
+| **domainName** | admin_domain |
+| **flavorName** | m1.large |
+| **floatingipPool** | ext_net |
+| **imageName** | bionic |
+| **insecure** | enable |
+| **keypairName** | os_rsa |
+| **netName** | int_net |
+| **password** | Uafe7chee6eigedi |
+| **privateKeyFile** | <contents of ~/.ssh/os_rsa> |
+| **secGroups** | default |
+| **sshUser** | ubuntu |
+| **tenantid** | ca52ba242b104464b15811d4589f836e |
+| **username** | admin |
+
+> Be sure to use tenantId instead of tenantName. Using tenantName will cause docker-machine to use the wrong Openstack API
+>version.
+
+Once you've added all of your relevant settings to the template click **Create** to save the node template.
 
 ![Enable Node Template](/assets/images/20190918/node_template_3.png "Enable Node Template")
 
@@ -127,19 +258,26 @@ Clusters -> Add Cluster
 ![Add Cluster](/assets/images/20190918/add_cluster_1.png "Add Cluster")
 
 - Type Openstack
+
+![Add Cluster](/assets/images/20190918/add_cluster_2.png "Add Cluster")
+
 - Cluster Name - os1
 - Node Name Prefix - os1-all-
 - Count - 3
 - Node Template Openstack
 - Node Service - etcd, control plane, worker
-- Openstack Cloud Provider
-
-![Add Cluster](/assets/images/20190918/add_cluster_2.png "Add Cluster")
 
 ![Add Cluster](/assets/images/20190918/add_cluster_3.png "Add Cluster")
 
 ## Configure the Cloud Provider
-Cloud Provider Custom
+Kubernetes [Cloud Provider]
+
+>Cloud Providers enable a set of functionality that integrate with the underlying infrastructure provider, a.k.a the cloud 
+>provider. Enabling this integration unlocks a wide set of features for your clusters such as: node address & zone 
+>discovery, cloud load balancers for Services with Type=LoadBalancer, IP address management, and cluster networking via 
+>VPC routing tables.
+
+[Cloud Provider]:https://kubernetes.io/docs/concepts/cluster-administration/cloud-providers/
 
 ![Cloud Provider](/assets/images/20190918/cloud_provider_1.png "Cloud Provider")
 
