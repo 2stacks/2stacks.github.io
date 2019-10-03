@@ -405,10 +405,11 @@ juju run-action --wait octavia-diskimage-retrofit/leader retrofit-image
 Once everything has been configured and Juju has finished it's deployment we can begin validating the installation by creating
 resources within Openstack.
 
->The output of `juju status` should show everything as **active** with the exception of Vault.  It's ok to leave this as 
+>The output of `juju status` should show everything as **active** with the exception of [Vault].  It's ok to leave this as 
 >is for now but if you'd like additional information on setting up Vault please reference [Appendix C] of the Openstack 
 >deployment documentation.
 
+[Vault]:https://www.vaultproject.io/
 [Appendix C]:https://docs.openstack.org/project-deploy-guide/charm-deployment-guide/latest/app-vault.html
 
 ## API Access
