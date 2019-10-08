@@ -1,6 +1,6 @@
 ---
 title: "Bare Metal to Kubernetes-as-a-Service - Part 2"
-excerpt: "Using JUJU and MAAS to deploy Openstack."
+excerpt: "Using JuJu and MAAS to deploy Openstack."
 layout: single
 toc: true
 categories:
