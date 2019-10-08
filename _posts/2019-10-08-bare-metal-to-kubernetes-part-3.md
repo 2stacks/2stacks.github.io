@@ -126,7 +126,7 @@ openstack server add floating ip rancher ${floating_ip}
 ```
 
 # Security Groups
-Rancher and Kubernetes in general has many port and protocol requirements for communicating with cluster nodes.  There are 
+Kubernetes has many port and protocol requirements for communicating with cluster nodes.  There are 
 several different ways to implement these requirements depending upon the type of public or private cloud you are deploying 
 to.  Make sure you review these [port and protocol] requirements before running Rancher in production.  For demonstration 
 purposes I'm going to update the existing default security group in Openstack to allow all traffic.  It should go without 
@@ -150,23 +150,26 @@ openstack server show rancher -f value -c addresses
 
 Now open a web browser and launch the Rancher User Interface (UI) at `https://<floating_ip>`.
 
-![Rancher UI](/assets/images/20190918/rancher_ui.png "Rancher UI")
+![Rancher UI](/assets/images/20191008/rancher_ui.png "Rancher UI")
 
 # Configure Rancher
-Upon connecting to the Rancher UI you'll be prompted to set a new password for the default `admin` user.
+Upon connecting to the Rancher UI you'll be prompted to set a new password for the default **admin** user.
 
 After selecting **Continue** you'll be prompted to set the Rancher server URL.  It's OK to leave the default for now but 
-typically this would be the fully qualified domain name of the server.  Note: all cluster nodes will
-need to be able to reach this URL and it can be changed later from within the UI.
+typically this would be the fully qualified domain name of the server ([FQDN]).  
 
-![Rancher URL](/assets/images/20190918/rancher_url.png "Rancher URL")
+>Note: all cluster nodes will need to be able to reach this URL and it can be changed later from within the UI.
+
+[FQDN]:https://en.wikipedia.org/wiki/Fully_qualified_domain_name
+
+![Rancher URL](/assets/images/20191008/rancher_url.png "Rancher URL")
 
 After selecting **Save URL** you'll be logged in to the default **Clusters** view of the UI.  Since no clusters have been
-added, only a **Add Cluster** button is visible.  
+added, only an **Add Cluster** button is visible.  
 
 ## Enable Openstack Node Driver
-Before adding our first cluster we need to configure settings to allow Rancher to automate the provisioning of Openstack 
-resources.  The first configuration change will be to enable the Openstack [Node Driver].
+Before adding our first cluster we need to configure settings that allow Rancher to automate the provisioning of Openstack 
+resources.  The first step is to enable the Openstack [Node Driver].
 
 >Node drivers are used to provision hosts, which Rancher uses to launch and manage Kubernetes clusters.
 
@@ -174,12 +177,12 @@ resources.  The first configuration change will be to enable the Openstack [Node
 
 To enable the Openstack Node Driver navigate to **Tools** then **Drivers** in the UI navigation.
 
-![Enable Node Driver](/assets/images/20190918/node_driver_1.png "Enable Node Driver")
+![Enable Node Driver](/assets/images/20191008/node_driver_1.png "Enable Node Driver")
 
-On the Drivers page, click tab for **Node Drivers**, select the check box next to **OpenStack** and then click the **Activate**
+On the Drivers page, click the tab for **Node Drivers**, select the check box next to **OpenStack** and then click the **Activate**
 button.
 
-![Enable Node Driver](/assets/images/20190918/node_driver_2.png "Enable Node Driver")
+![Enable Node Driver](/assets/images/20191008/node_driver_2.png "Enable Node Driver")
 
 ## Add Openstack Node Template
 Once we've enabled the Openstack Node Driver we can create a [Node Template] that will specify the settings used to create
@@ -187,24 +190,24 @@ nodes/hosts within Openstack.
 
 [Node Template]:https://rancher.com/docs/rancher/v2.x/en/cluster-provisioning/rke-clusters/node-pools/#node-templates
 
-To create the node template click the drop down in the top right of the UI next to the admin user avatar and select 
+To create the node template click the drop down in the top right of the UI next to the admin user's avatar and select 
 **Node Templates**.
 
-![Enable Node Template](/assets/images/20190918/node_template_1.png "Enable Node Template")
+![Enable Node Template](/assets/images/20191008/node_template_1.png "Enable Node Template")
 
 Next click the **Add Template** button.
 
-![Enable Node Template](/assets/images/20190918/node_template_4.png "Enable Node Template")
+![Enable Node Template](/assets/images/20191008/node_template_4.png "Enable Node Template")
 
-On the Add Node Template page first select the option for Openstack.  Before filling out the template data we'll need to
+On the **Add Node Template** page first select the option for Openstack.  Before filling out the template data we'll need to
 retrieve our settings from the Openstack API.
 
-![Enable Node Template](/assets/images/20190918/node_template_2.png "Enable Node Template")
+![Enable Node Template](/assets/images/20191008/node_template_2.png "Enable Node Template")
 
 ### Obtain Template Settings
 The script for obtaining the default API credentials was included in the Openstack bundle we downloaded in 
 [Part 2](https://www.2stacks.net/blog/bare-metal-to-kubernetes-part-2/#configure-openstack-bundle).  If they are not already
-loaded in your environment change to the openstack-base directory and run the following.
+loaded in your environment change to the **openstack-base** directory and run the following.
 ```bash
 ~$ source openrc
 ~$ env | grep OS_
@@ -214,19 +217,18 @@ OS_PASSWORD=Uafe7chee6eigedi
 OS_AUTH_URL=http://10.1.20.32:5000/v3
 OS_USERNAME=admin
 ```
->Above, I've only listed the settings needed for the node template.
+>Only the settings needed for the node template are shown above.
 
-After loading the API credentials in your environment, you'll need to obtain the default domain and tenant id from the 
+After loading the API credentials in your environment, you'll need to obtain the default **domain** and **tenant** id from the 
 Openstack API.
 ```bash
 openstack project show admin -f value -c id
 ```
 
-Once you have these settings you should have all of the information needed to fill out the node template.  Several of the 
-settings shown below were created in [Part 2](https://www.2stacks.net/blog/bare-metal-to-kubernetes-part-2/#validate-deployment)
-in order to validate the Openstack installation.  
+Once you have these settings you should have all of the information needed to fill out the node template.  
 
->Below are all of the required settings with the values relevant to my environment.
+>Several of the settings shown below were created in [Part 2](https://www.2stacks.net/blog/bare-metal-to-kubernetes-part-2/#validate-deployment)
+in order to validate the Openstack installation.  Some of these settings are shown with the values specific to my environment.
 
 | Option | Value |
 |--- |--- |
@@ -250,7 +252,7 @@ in order to validate the Openstack installation.
 
 Once you've added all of your relevant settings to the template click **Create** to save the node template.
 
-![Enable Node Template](/assets/images/20190918/node_template_3.png "Enable Node Template")
+![Enable Node Template](/assets/images/20191008/node_template_3.png "Enable Node Template")
 
 # Add Cluster
 Now that we've configured the settings Rancher will use to create nodes within Openstack, we can add our first Kubernetes
@@ -258,11 +260,11 @@ cluster.
 
 Click on **Custers** in the UI navigation and then click the **Add Cluster** button.
 
-![Add Cluster](/assets/images/20190918/add_cluster_1.png "Add Cluster")
+![Add Cluster](/assets/images/20191008/add_cluster_1.png "Add Cluster")
 
 On the **Add Cluster** page select **Openstack** from the list of infrastructure providers.
 
-![Add Cluster](/assets/images/20190918/add_cluster_2.png "Add Cluster")
+![Add Cluster](/assets/images/20191008/add_cluster_2.png "Add Cluster")
 
 Continue configuring the cluster with the following settings;
 
@@ -279,7 +281,7 @@ For demonstration purposes select the check boxes next to [etcd], [control plane
 [control plane]:https://kubernetes.io/docs/concepts/#kubernetes-control-plane
 [worker]:https://kubernetes.io/docs/concepts/architecture/nodes/
 
-![Add Cluster](/assets/images/20190918/add_cluster_3.png "Add Cluster")
+![Add Cluster](/assets/images/20191008/add_cluster_3.png "Add Cluster")
 
 These setting will create a three node cluster named **os1** using the previously created Openstack node template.  Each 
 node will be configured to run the Kubernetes etcd, control plane and worker services.
@@ -299,7 +301,7 @@ Before launching the cluster you'll need to configure the Kubernetes [Cloud Prov
 Under the **Cloud Provider** section select the **Custom** option.  A warning message will appear that states that the 
 prerequisites of the underlying cloud provider must be met before enabling this option.  
 
-![Cloud Provider](/assets/images/20190918/cloud_provider_1.png "Cloud Provider")
+![Cloud Provider](/assets/images/20191008/cloud_provider_1.png "Cloud Provider")
 
 > All of the prerequisite configurations for Openstack were applied in [Part 2]({% post_url 2019-09-06-bare-metal-to-kubernetes-part-2 %}) of this series.
 
@@ -309,7 +311,7 @@ Options** section.
 
 [YAML]:https://yaml.org/
 
-![Cloud Provider](/assets/images/20190918/cloud_provider_2.png "Cloud Provider")
+![Cloud Provider](/assets/images/20191008/cloud_provider_2.png "Cloud Provider")
 
 ### Obtain Cloud Provider Settings
 To configure the Openstack cloud provider we need to add a section of YAML to the top of the configuration.  The YAML
@@ -330,14 +332,23 @@ The remaining configuration settings can be obtained from the Openstack API.  Ru
 output.
 
 ```bash
+# tenant-id
 openstack project show admin -f value -c id
+
+# domain-id
 openstack project show admin -f value -c domain_id
+
+# subnet-id
 openstack subnet show int_subnet -f value -c id
+
+# floating-network-id
 openstack network show ext_net -f value -c id
+
+# router-id
 openstack router show rtr-01 -f value -c id
 ```
 
-Now that we have the needed credentials and settings we need to add them to a YAML formatted block of text as shown below.
+Now that we have the needed credentials and settings we can add them to a YAML formatted block of text as shown below.
 
 ```yaml
 cloud_provider:
@@ -357,10 +368,9 @@ cloud_provider:
       router-id: 498ce328-6ba2-4a09-b421-71e28028b4fa
 ```
 
-Paste this configuration (substituting your values) in to the top of the Rancher Cloud Provider YAML configuration as 
-shown below. 
+Paste this configuration (substituting your values) in to the top of the Cloud Provider YAML configuration as shown below. 
 
-![Cloud Provider](/assets/images/20190918/cloud_provider_3.png "Cloud Provider")
+![Cloud Provider](/assets/images/20191008/cloud_provider_3.png "Cloud Provider")
 
 Now click the **Create** button to launch the Kubernetes cluster.
 
@@ -371,12 +381,13 @@ Now click the **Create** button to launch the Kubernetes cluster.
 
 ## Validate Cluster
 As the cluster is deploying we can monitor its progress and status in the Rancher UI by navigating to the **Clusters** page
-selecting the link to **os1** under the **Cluster Name** list.  From there click on **Nodes** in the UI navigation.
+and selecting the link to **os1** under the **Cluster Name** list.  From there click on **Nodes** in the UI navigation.
 
-![Validate Cluster](/assets/images/20190918/validate_cluster_1.png "Validate Cluster")
+![Validate Cluster](/assets/images/20191008/validate_cluster_1.png "Validate Cluster")
 
 From here status and error messages will be displayed as the cluster is being deployed.
 
+### Rancher Logs
 You can also monitor the cluster build process by connecting to the Rancher instance with SSH.  This is useful for debugging 
 any error messages produced by Rancher.
 
@@ -397,6 +408,7 @@ Run the following to watch the logs of the rancher container.
 docker logs -f 21792badbb1c
 ```
 
+### Openstack API
 You can validate the creation of each cluster node and its associated settings from the Openstack API.
 ```bash
 $ openstack server list
@@ -413,26 +425,27 @@ $ openstack server list
 Make sure that the status of all hosts created in Openstack is **ACTIVE** and that each is associated with a floating IP 
 address.
 
+### Rancher UI
 Once the cluster nodes have been deployed and Rancher has completed the Kubernetes installation process the **State** of 
-each node in the Rancher UI should change to **Active**
+each node in the Rancher UI should change to **Active**.
 
-![Validate Cluster](/assets/images/20190918/validate_cluster_2.png "Validate Cluster")
+![Validate Cluster](/assets/images/20191008/validate_cluster_2.png "Validate Cluster")
 
 # Deploy Application
 Now that the cluster has been deployed we can validate its functionality by deploying a simple test application.
 
-First navigate to the cluster's default [namespace] by selecting the cluster name (os1) in the top left of the navigation and 
-then selecting **Default**.
+First navigate to the cluster's default [namespace] by selecting the cluster name **os1** in the top left of the navigation 
+and then selecting **Default**.
 
 [namespace]:https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/
 
-![Deploy App](/assets/images/20190918/deploy_app_1.png "Deploy App")
+![Deploy App](/assets/images/20191008/deploy_app_1.png "Deploy App")
 
 From the [Workloads] view click the **Deploy** button to configure our test application.
 
 [Workloads]:https://rancher.com/docs/rancher/v2.x/en/k8s-in-rancher/workloads/
 
-![Deploy App](/assets/images/20190918/deploy_app_2.png "Deploy App")
+![Deploy App](/assets/images/20191008/deploy_app_2.png "Deploy App")
 
 ## Configure Workload
 First set the following name, type and image for the workload.
@@ -443,7 +456,7 @@ First set the following name, type and image for the workload.
 | **Workload Type** | 3 pods |
 | **Docker Image** | [leodotcloud/swiss-army-knife](https://github.com/leodotcloud/swiss-army-knife) |
 
-![Deploy App](/assets/images/20190918/deploy_app_3.png "Deploy App")
+![Deploy App](/assets/images/20191008/deploy_app_3.png "Deploy App")
 
 Next click the **Add Port** button and configure the port, protocol and [service type].
 
@@ -456,7 +469,7 @@ Next click the **Add Port** button and configure the port, protocol and [service
 
 [service type]:https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types
 
-Next add an environment variables to be used by the application by expanding the **Environment Variables** section and 
+Next add an environment variable to be used by the application by expanding the **Environment Variables** section and 
 clicking the **Add Variable** button.
 
 Add the following environment variable then click the **Launch** button to deploy the application.
@@ -465,7 +478,7 @@ Add the following environment variable then click the **Launch** button to deplo
 |--- |--- |
 | **ALPHABET** | A |
 
-![Deploy App](/assets/images/20190918/deploy_app_4.png "Deploy App")
+![Deploy App](/assets/images/20191008/deploy_app_4.png "Deploy App")
 
 >Adding the environment variable is optional but is useful for testing additional Kubernetes functionality.
 
@@ -480,12 +493,12 @@ environment.
 ## View Application Status
 While the workload is is being deployed we can monitor its status and progress from the **Workloads** view in Rancher.
 
-![Validate App](/assets/images/20190918/validate_app_1.png "Validate App")
+![Validate App](/assets/images/20191008/validate_app_1.png "Validate App")
 
 You can change the default view to **Group By Node** to see the placement of each Pod on the nodes in our Kubernetes 
 cluster.
 
-![Validate App](/assets/images/20190918/validate_app_2.png "Validate App")
+![Validate App](/assets/images/20191008/validate_app_2.png "Validate App")
 
 ## View Load Balancer Status
 Since we chose a service type of **Layer-4 Load Balancer** Rancher will use the previously configured cloud provider to 
@@ -494,7 +507,7 @@ load balancer to direct traffic to our new application.
 
 You can view the deployment status and configuration of the load balancer from the **Load Balancing** view of the Rancher UI.
 
-![Validate LB](/assets/images/20190918/validate_lb_1.png "Validate LB")
+![Validate LB](/assets/images/20191008/validate_lb_1.png "Validate LB")
 
 >It can take some time for Openstack to create the Octavia virtual machine instance so be patient.
 
@@ -512,26 +525,34 @@ $ openstack loadbalancer list
 The **provisioning_status** in the Openstack API should eventually change to **ACTIVE**.  You can further validate that the
 **State** shown in the Rancher UI has changed from **Pending** to **Active**.
 
-![Validate LB](/assets/images/20190918/validate_lb_2.png "Validate LB")
+![Validate LB](/assets/images/20191008/validate_lb_2.png "Validate LB")
 
 ## Test Application
 Now that the workload and it's load balancer have been deployed we can connect to the web application included in the 
 swiss-army-knife container.
 
-From the **Workloads** view of the Rancher UI click the link below the application's name.  This should launch a browser
-and connect you to the floating IP address that was assigned to the load balancer.
+From the **Workloads** view of the Rancher UI click the **80/tcp** link below the application's name.  This should launch 
+a web browser and connect you to the floating IP address that was assigned to the load balancer.
 
-![Test App](/assets/images/20190918/test_app_1.png "Test App")
+![Test App](/assets/images/20191008/test_app_1.png "Test App")
 
 The browser window should display the floating IP of the load balancer in the address bar. The page should show the hostname 
-and IP address of the container that the load balancer forwarded you to.
+and IP address of the container instance that the load balancer forwarded you to.
 
-![Test App](/assets/images/20190918/test_app_2.png "Test App")
+![Test App](/assets/images/20191008/test_app_2.png "Test App")
 
 If you refresh the browser periodically you should see that the load balancer forwards you to each of the three containers
 that were launched as part of the workload.
 
-![Test App](/assets/images/20190918/test_app_3.png "Test App")
+![Test App](/assets/images/20191008/test_app_3.png "Test App")
 
 # Conclusion
+Once you've successfully completed your validation you should have the basic functionality needed for delivering Kubernetes
+as a service.  Though this demonstration only walked you through the creation of a single cluster it is trivial to create
+additional clusters by reproducing these steps.  By leveraging additional features in Rancher, creating additional host and
+cloud templates and by utilizing the Rancher API you can streamline your process for abstracting the creation of these clusters.
+Additional efficiency can be added by using DevOps tools such as HashiCorp's [Terraform] to fully automate Rancher configurations
+and deployments.
 
+[HashiCorp's]:https://www.hashicorp.com/
+[Terraform]:https://www.hashicorp.com/products/terraform/
