@@ -1,6 +1,6 @@
 ---
 title: "Bare Metal to Kubernetes-as-a-Service - Part 3"
-excerpt: "Using Rancher to deploy self-service Kubernetes clusters"
+excerpt: "Using Rancher to deploy self-service Kubernetes clusters."
 layout: single
 toc: true
 categories:
