@@ -109,7 +109,7 @@ replicaset.apps/cert-manager-cainjector-59d69b9b   1         1         1       1
 replicaset.apps/cert-manager-webhook-cfd6587ff     1         1         1       165m
 ```
 
-Unlike previous versions of the Rancher cert-manager application, you'll need to create your own Cluster Issuer. First
+Unlike previous versions of the Rancher cert-manager application, you'll need to create your own [Cluster Issuer]. First
 create similar to the following.
 ```bash
 ~$ cat cluster-issuer.yaml 
@@ -446,3 +446,4 @@ I've done to GitHub [@2stacks][7] and I mostly use Terraform so that my deployme
 [6]: https://github.com/kubernetes-incubator/external-dns
 [7]: https://github.com/2stacks
 [Customer Resource Definition]:https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/#customresourcedefinitions
+[Cluster Issuer]:https://docs.cert-manager.io/en/release-0.9/reference/clusterissuers.html
