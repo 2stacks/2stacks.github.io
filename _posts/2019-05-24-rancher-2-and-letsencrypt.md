@@ -110,7 +110,7 @@ replicaset.apps/cert-manager-webhook-cfd6587ff     1         1         1       1
 ```
 
 Unlike previous versions of the Rancher cert-manager application, you'll need to create your own [Cluster Issuer]. First
-create similar to the following.
+create a file similar to the following.
 ```bash
 ~$ cat cluster-issuer.yaml 
 apiVersion: certmanager.k8s.io/v1alpha1
