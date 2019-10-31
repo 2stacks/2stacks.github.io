@@ -16,6 +16,9 @@ I decided to write this post to help with the [discussion on the Rancher Forum][
 trying to setup Letsencrypt certificates with cert-manager.  I've borrowed and owe credit to work that's already been
 documented [here][1] and I'll try to stick to the steps I took to enable the full automation of the certificate process.
 
+> NOTE: This post has been updated to demonstrate usage of a newer version of cert-manager provided by JetPack. Notices
+> from Letsencrypt have been sent regarding the blocking of versions older than v0.8.0.
+
 Prerequisites
 -------------
 
@@ -23,12 +26,28 @@ I'm going to assume a few things for brevity.
 
 * You have a functioning Rancher 2.0 Cluster
 * You have kubectl set up with your [Rancher Kubeconfig File][2]
-* You have the [Rancher Library Catalog][3] enabled (you must use the cert-manager from the Rancher library and not from Helm Stable Catalog)
 * You have a publicly reachable dns service that points the domain, for which you want to issue certificates, to your cluster nodes, loadbalancer or port forwarder if using NAT.
 * If your cluster is behind NAT you have set up split DNS. (See section on DNS)
 
 Installation
 ------------
+### Enable JetPack Helm Repository
+
+The default library repository in Rancher only includes cert-manager versions up to v0.5.2. The first thing we need to
+do is add the JetPack repository to Rancher.
+
+In the Rancher UI navigation go to **Tools** and select **Catalogs**.
+
+![Add Catalog](/assets/images/20190524/Selection_001.png "Add Catalog")
+
+Next click the **Add Catalog** button.
+
+![Add Catalog](/assets/images/20190524/Selection_002.png "Add Catalog")
+
+Give the new catalog a name like `jetstack` and configure `https://charts.jetstack.io` as the catalog URL.
+
+![Add Catalog](/assets/images/20190524/Selection_003.png "Add Catalog")
+
 ### Install cert-manager
 
 Lets start by ensuring we are working from a clean slate.  If you have attempted to install cert-manager before remove any
@@ -42,79 +61,90 @@ No resources found.
 ~$ kubectl describe clusterissuers letsencrypt-staging
 error: the server doesnt have a resource type "clusterissuers"
 ```
-<br/>
-Next navigate to the `Apps` section of your chosen Rancher Project.  The project shouldn't matter but I chose to use the `System`
-project for all cluster wide services.
+
+Before installing the cert-manager application in Rancher we need to first add the [Customer Resource Definition]. From
+your workstation execute the following.
+
+```bash
+kubectl apply -f https://raw.githubusercontent.com/jetstack/cert-manager/release-0.9/deploy/manifests/00-crds.yaml
+```
+
+Now label the kube-system namespace to disable resource validation.
+
+```bash
+kubectl label namespace kube-system certmanager.k8s.io/disable-validation=true
+```
+ 
+Next navigate to the **Apps** section of the Rancher **System** Project.
 
 ![alt text](/assets/images/20190524/nav_to_apps.png "Navigate to Apps")
 
-Next click the launch button and and type "cert" in the search menu.  Click `View Details` on the cert-manager provided by 
-the Rancher Library.
+Next click the **Launch** button and type **cert** in the search menu. Click on the cert-manager provided by the
+JetStack catalog.
 
-![alt text](/assets/images/20190524/cert_mgr_from_library.png "Launch cert-manager")
+![alt text](/assets/images/20190524/Selection_009.png "Launch cert-manager")
 
-The only settings you need to change are for the type of `Issuer Client` and the `Client Register Email`.  If you are not
-confident that you have fully met the previously mentioned prerequisites you should leave the issuer client set to `letsencrypt-staging`.
-Once you've configured your settings click the `Launch` button.
+Change the namespace to **kube-system** and set the template version to **v0.9.1**. 
 
-![alt text](/assets/images/20190524/config_cert_mgr.png "Configure cert-manager")
+> Previous versions of cert-manager used the namespace 'cert-manager'. Make sure you deploy to kube-system or the
+> installation will fail.
+
+![alt text](/assets/images/20190524/Selection_010.png "Configure cert-manager")
 
 ### Verify Installation
 
 Now verify your app deployment with kubectl.
 
 ```bash
-~$ kubectl get all -n cert-manager
-NAME                                READY   STATUS    RESTARTS   AGE
-pod/cert-manager-58c7cf9fb4-xlwkl   1/1     Running   0          65s
-
-NAME                           READY   UP-TO-DATE   AVAILABLE   AGE
-deployment.apps/cert-manager   1/1     1            1           65s
-
-NAME                                      DESIRED   CURRENT   READY   AGE
-replicaset.apps/cert-manager-58c7cf9fb4   1         1         1       65s
+~$ kubectl get all -n kube-system | grep cert-manager
+pod/cert-manager-5b9ff77b7-lhsb4             1/1     Running     0          165m
+pod/cert-manager-cainjector-59d69b9b-9f5ng   1/1     Running     0          165m
+pod/cert-manager-webhook-cfd6587ff-fz2cv     1/1     Running     0          125m
+service/cert-manager-webhook   ClusterIP   10.43.104.116   <none>        443/TCP                  165m
+deployment.apps/cert-manager              1/1     1            1           165m
+deployment.apps/cert-manager-cainjector   1/1     1            1           165m
+deployment.apps/cert-manager-webhook      1/1     1            1           165m
+replicaset.apps/cert-manager-5b9ff77b7             1         1         1       165m
+replicaset.apps/cert-manager-cainjector-59d69b9b   1         1         1       165m
+replicaset.apps/cert-manager-webhook-cfd6587ff     1         1         1       165m
 ```
+
+Unlike previous versions of the Rancher cert-manager application, you'll need to create your own Cluster Issuer. First
+create similar to the following.
 ```bash
-~$ kubectl describe clusterissuers letsencrypt-staging
-Name:         letsencrypt-staging
-Namespace:    
-Labels:       app=cert-manager
-              chart=cert-manager-v0.5.2
-              heritage=Tiller
-              io.cattle.field/appId=cert-manager
-              release=cert-manager
-Annotations:  <none>
-API Version:  certmanager.k8s.io/v1alpha1
-Kind:         ClusterIssuer
-Metadata:
-  Creation Timestamp:  2019-05-30T20:41:32Z
-  Generation:          2
-  Resource Version:    1008181
-  Self Link:           /apis/certmanager.k8s.io/v1alpha1/clusterissuers/letsencrypt-staging
-  UID:                 <some_uid>
-Spec:
-  Acme:
-    Email:  2stacks@2stacks.net
-    Http 01:
-    Private Key Secret Ref:
-      Key:   
-      Name:  letsencrypt-staging-account-key
-    Server:  https://acme-staging-v02.api.letsencrypt.org/directory
-Status:
-  Acme:
-    Uri:  https://acme-staging-v02.api.letsencrypt.org/acme/acct/<acct_number>
-  Conditions:
-    Last Transition Time:  2019-05-30T20:41:46Z
-    Message:               The ACME account was registered with the ACME server
-    Reason:                ACMEAccountRegistered
-    Status:                True
-    Type:                  Ready
-Events:                    <none>
+~$ cat cluster-issuer.yaml 
+apiVersion: certmanager.k8s.io/v1alpha1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-staging
+spec:
+  acme:
+    # The ACME server URL
+    server: https://acme-staging-v02.api.letsencrypt.org/directory
+    # Email address used for ACME registration
+    email: 2stacks@2stacks.net
+    # Name of a secret used to store the ACME account private key
+    privateKeySecretRef:
+      name: letsencrypt-staging-account-key
+    # Enable HTTP01 validations
+    http01: {}
 ```
-<br/>
 
-The important thing to note is that the cert-manager pod is running and that your email account was successfully registered
-with the ACME server API.  If you output isn't similar to above check the logs of the cert-manager pod for any issues.
+Now apply the configuration with;
+
+```bash
+kubectl create -f cluster-issuer.yaml
+```
+
+Verify the creation of the Cluster Issuer with;
+
+```bash
+kubectl describe clusterissuers letsencrypt-
+```
+
+The important thing to note is that the cert-manager pod is running and that your email account was successfully
+registered with the ACME server API. If your output isn't similar to above check the logs of the cert-manager pod for
+any issues.
 
 ![alt text](/assets/images/20190524/view_logs.png "View Logs")
 
@@ -415,3 +445,4 @@ I've done to GitHub [@2stacks][7] and I mostly use Terraform so that my deployme
 [5]: https://www.powerdns.com/
 [6]: https://github.com/kubernetes-incubator/external-dns
 [7]: https://github.com/2stacks
+[Customer Resource Definition]:https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/#customresourcedefinitions
