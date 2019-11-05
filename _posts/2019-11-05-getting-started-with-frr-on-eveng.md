@@ -1,6 +1,9 @@
 ---
 title: "Getting Started with FRRouting"
 excerpt: "Installing and Running FRR on Eve-NG"
+header:
+  og_image: /assets/images/denny-bu-Jth4utoCVNo-unsplash.jpg
+  caption: "Photo credit: Photo by Denny Bú on [**Unsplash**](https://unsplash.com)"
 layout: single
 toc: true
 categories:
