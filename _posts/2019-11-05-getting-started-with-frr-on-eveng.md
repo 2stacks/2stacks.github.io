@@ -15,7 +15,7 @@ tags:
 ---
 # Introduction
 If you've been around networking long enough chances are you have heard of the open source routing software [Zebra] or 
-[Quagga].  You may have used them without knowing if you ever worked with Sidewinder firewalls or Brocade's Vyatta.  If 
+[Quagga].  You may have used them without knowing, if you ever worked with Sidewinder firewalls or Brocade's Vyatta.  If 
 you :heart: Linux and open source routing you may have heard of the next evolution in open source routing [FRRouting] 
 aka Free Range Routing (FRR).  If you haven't;
 
