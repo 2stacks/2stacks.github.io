@@ -367,7 +367,7 @@ frr       2291     1  0 00:49 ?        00:00:00 /usr/lib/frr/staticd -d -A 127.0
 
 ## Enable Kernel Forwarding
 IP forwarding is disabled by default on most linux distributions so in order to perform any routing you must enable ip 
-forwarding in the kernel by editing `/etc/systctl.conf` and uncommenting the following lines.
+forwarding in the kernel by editing `/etc/sysctl.conf` and uncommenting the following lines.
 ```bash
 net.ipv4.ip_forward=1
 net.ipv6.conf.all.forwarding=1
