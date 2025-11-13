@@ -1,10 +1,13 @@
 source "https://rubygems.org"
 
-# Pin to specific github-pages version for reproducible builds
-gem "github-pages", "~> 232", group: :jekyll_plugins
+# Jekyll 4.x
+gem "jekyll", "~> 4.3"
 
 # Required for Ruby 3.0+
 gem "webrick", "~> 1.8"
+
+# Sass support for Jekyll 4
+gem "sass-embedded", "~> 1.77"
 
 gem "tzinfo-data"
 gem "wdm", "~> 0.1.0" if Gem.win_platform?
@@ -18,4 +21,6 @@ group :jekyll_plugins do
   gem "jemoji"
   gem "jekyll-include-cache"
   gem "jekyll-algolia"
+  gem "jekyll-seo-tag"
+  gem "jekyll-remote-theme"
 end
