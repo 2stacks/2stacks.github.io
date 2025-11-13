@@ -1,6 +1,10 @@
 source "https://rubygems.org"
 
-gem "github-pages", group: :jekyll_plugins
+# Pin to specific github-pages version for reproducible builds
+gem "github-pages", "~> 232", group: :jekyll_plugins
+
+# Required for Ruby 3.0+
+gem "webrick", "~> 1.8"
 
 gem "tzinfo-data"
 gem "wdm", "~> 0.1.0" if Gem.win_platform?

@@ -31,10 +31,13 @@ comments:
 google_site_verification: "xGzmpR56BcKfIDDfvqSTNBGxHe_2ibsCBu8yhJeOfX8"
 
 # Analytics
+# NOTE: Universal Analytics (UA) stopped working July 1, 2023
+# You need to create a Google Analytics 4 property and replace the placeholder below
+# Instructions: https://support.google.com/analytics/answer/9744165
 analytics:
   provider: "google-gtag"
   google:
-    tracking_id: "UA-142280412-1"
+    tracking_id: "G-XXXXXXXXXX"  # Replace with your GA4 measurement ID
     anonymize_ip: false # default
 
 # Social Sharing
@@ -51,7 +54,7 @@ social:
 
 # Build settings
 markdown: kramdown
-remote_theme: mmistakes/minimal-mistakes
+remote_theme: mmistakes/minimal-mistakes@4.27.3
 # Outputting
 permalink: /:categories/:title/
 paginate: 5 # amount of posts to show
