@@ -4,7 +4,7 @@ source "https://rubygems.org"
 gem "jekyll", "~> 4.3"
 
 # Required for Ruby 3.0+
-gem "webrick", "~> 1.8"
+gem "webrick", "~> 1.9"
 
 # Sass support for Jekyll 4
 gem "sass-embedded", "~> 1.77"
