@@ -7,7 +7,7 @@ gem "jekyll", "~> 4.3"
 gem "webrick", "~> 1.8"
 
 # Sass support for Jekyll 4
-gem "sass-embedded", "~> 1.77"
+gem "sass-embedded", "~> 1.96"
 
 gem "tzinfo-data"
 gem "wdm", "~> 0.1.0" if Gem.win_platform?
